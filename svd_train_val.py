@@ -14,8 +14,10 @@ np.random.seed(13575)
 BATCH_SIZE = 1000
 USER_NUM = 6040
 ITEM_NUM = 3952
-DIM = 15
-EPOCH_MAX = 100
+DIM = 50
+EPOCH_MAX = 200
+LEARNING_RATE = 0.0005
+REGULARIZATION = 0.1
 DEVICE = "/cpu:0"
 
 
@@ -28,7 +30,7 @@ def make_scalar_summary(name, val):
 
 
 def get_data():
-    df = dataio.read_process("/tmp/movielens/ml-1m/ratings.dat", sep="::")
+    df = dataio.read_process("tmp/movielens/ml-1m/ratings.dat", sep="::")
     rows = len(df)
     df = df.iloc[np.random.permutation(rows)].reset_index(drop=True)
     split_index = int(rows * 0.9)
@@ -57,7 +59,7 @@ def svd(train, test):
     infer, regularizer = ops.inference_svd(user_batch, item_batch, user_num=USER_NUM, item_num=ITEM_NUM, dim=DIM,
                                            device=DEVICE)
     global_step = tf.contrib.framework.get_or_create_global_step()
-    _, train_op = ops.optimization(infer, regularizer, rate_batch, learning_rate=0.001, reg=0.05, device=DEVICE)
+    _, train_op = ops.optimization(infer, regularizer, rate_batch, learning_rate=LEARNING_RATE, reg=REGULARIZATION, device=DEVICE)
 
     init_op = tf.global_variables_initializer()
     with tf.Session() as sess:
