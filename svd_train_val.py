@@ -8,13 +8,12 @@ from tensorflow.core.framework import summary_pb2
 
 import dataio
 import ops
-
+import sys, os
 #np.random.seed(13575)
 
-BATCH_SIZE = 1000
 USER_NUM = 6040
 ITEM_NUM = 3952
-EPOCH_MAX = 50
+EPOCH_MAX = 100
 DEVICE = "/cpu:0"
 
 
@@ -34,13 +33,13 @@ def get_data(seed=0, trainset_rate=0.9):
     df_test = df[split_index:].reset_index(drop=True)
     return df_train, df_test
 
-def svd(train, test, learning_rate=0.0005, reg=0.02, dim=50):
-    samples_per_batch = len(train) // BATCH_SIZE
+def svd(train, test, learning_rate=0.0005, reg=0.02, dim=50, batch_size=1000):
+    samples_per_batch = len(train) // batch_size
 
     iter_train = dataio.ShuffleIterator([train["user"],
                                          train["item"],
                                          train["rate"]],
-                                        batch_size=BATCH_SIZE)
+                                        batch_size=batch_size)
 
     iter_test = dataio.OneEpochIterator([test["user"],
                                          test["item"],
@@ -55,6 +54,8 @@ def svd(train, test, learning_rate=0.0005, reg=0.02, dim=50):
                                            device=DEVICE)
     global_step = tf.contrib.framework.get_or_create_global_step()
     _, train_op = ops.optimization(infer, regularizer, rate_batch, learning_rate=learning_rate, reg=reg, device=DEVICE)
+
+    pid = int(os.getpid())
 
     init_op = tf.global_variables_initializer()
     with tf.Session() as sess:
@@ -82,14 +83,14 @@ def svd(train, test, learning_rate=0.0005, reg=0.02, dim=50):
                 end = time.time()
                 test_err = np.sqrt(np.mean(test_err2))
                 min_test_err = min(test_err, min_test_err)
-                print("{:3d} {:f} {:f} {:f} {:f}(s)".format(i // samples_per_batch, train_err, test_err, min_test_err,
+                print("{:5d} {:3d} {:f} {:f} {:f} {:f}(s)".format(pid, i // samples_per_batch, train_err, test_err, min_test_err,
                                                        end - start))
                 train_err_summary = make_scalar_summary("training_error", train_err)
                 test_err_summary = make_scalar_summary("test_error", test_err)
                 summary_writer.add_summary(train_err_summary, i)
                 summary_writer.add_summary(test_err_summary, i)
                 start = end
-
+                sys.stdout.flush()
 
 if __name__ == '__main__':
     import sys
@@ -99,7 +100,8 @@ if __name__ == '__main__':
     lr = float(sys.argv[3])
     reg = float(sys.argv[4])
     dim = int(sys.argv[5])
+    batch_size = int(sys.argv[6])
 
     df_train, df_test = get_data(seed, trainset_rate)
-    svd(df_train, df_test, lr, reg, dim)
+    svd(df_train, df_test, lr, reg, dim, batch_size)
     print("Done!")
