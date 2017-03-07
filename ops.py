@@ -16,6 +16,7 @@ def inference_svd(user_batch, item_batch, user_num, item_num, dim=5, device="/cp
         embd_item = tf.nn.embedding_lookup(w_item, item_batch, name="embedding_item")
     with tf.device(device):
         infer = tf.reduce_sum(tf.multiply(embd_user, embd_item), 1)
+        #infer = tf.add(infer, bias_global, name="svd_inference")
         infer = tf.add(infer, bias_global)
         infer = tf.add(infer, bias_user)
         infer = tf.add(infer, bias_item, name="svd_inference")
