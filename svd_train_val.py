@@ -13,7 +13,7 @@ import sys, os
 
 USER_NUM = 6040
 ITEM_NUM = 3952
-EPOCH_MAX = 100
+EPOCH_MAX = 200
 DEVICE = "/cpu:0"
 
 
