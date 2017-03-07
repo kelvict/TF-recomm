@@ -96,7 +96,7 @@ if __name__ == '__main__':
     seed = int(sys.argv[1])
     trainset_rate = float(sys.argv[2])
 
-    lr = int(sys.argv[3])
+    lr = float(sys.argv[3])
     reg = float(sys.argv[4])
     dim = int(sys.argv[5])
 
